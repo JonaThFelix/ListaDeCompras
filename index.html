@@ -123,6 +123,18 @@
                 max-width: 100%;
             }
         }
+
+        /* Novas regras CSS para o campo "Limite" */
+        .initial-value {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .initial-value input {
+            flex: 1;
+            max-width: none;
+        }
     </style>
 </head>
 <body>
@@ -205,25 +217,24 @@
         initialValueInput.addEventListener('input', updateTotals);
 
         function exportToPDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
 
-        doc.text("Lista de Compras", 10, 10);
-        doc.text("Criado por Jonathan Felix", 10, 20);
+            doc.text("Lista de Compras", 10, 10);
+            doc.text("Criado por Jonathan Felix", 10, 20);
 
-        let y = 30;
-        itemList.querySelectorAll('.item').forEach(item => {
-            const textLines = doc.splitTextToSize(item.textContent, 180); // Evita que textos longos sejam cortados
-            doc.text(textLines, 10, y);
-            y += (textLines.length * 7); // Ajusta a posição para a próxima linha
-        });
+            let y = 30;
+            itemList.querySelectorAll('.item').forEach(item => {
+                const textLines = doc.splitTextToSize(item.textContent, 180); // Evita que textos longos sejam cortados
+                doc.text(textLines, 10, y);
+                y += (textLines.length * 7); // Ajusta a posição para a próxima linha
+            });
 
-        doc.text(totalDisplay.textContent, 10, y);
-        doc.text(remainingDisplay.textContent, 10, y + 10);
+            doc.text(totalDisplay.textContent, 10, y);
+            doc.text(remainingDisplay.textContent, 10, y + 10);
 
-        doc.save("lista_de_compras.pdf");
-}
-
+            doc.save("lista_de_compras.pdf");
+        }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
