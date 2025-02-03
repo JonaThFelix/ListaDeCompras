@@ -103,11 +103,11 @@
 
         .export-button {
             margin-top: 15px;
-            background: #4CAF50;
+            background: #4c55b7; /*#4c55b7 roxo*/
         }
 
         .export-button:hover {
-            background: #45a049;
+            background: #31c15c;
         }
 
         @media (max-width: 400px) {
@@ -157,7 +157,7 @@
         </form>
         <ul class="item-list" id="itemList"></ul>
         <div class="total" id="totalDisplay">Total: R$ 0.00</div>
-        <div class="total" id="remainingDisplay">Restante: R$ 0.00</div>
+        <div class="total" id="remainingDisplay">Resta: R$ 0.00</div>
         <button class="export-button" onclick="exportToPDF()">Exportar para PDF</button>
     </div>
 
@@ -191,7 +191,7 @@
             const listItem = document.createElement('li');
             listItem.classList.add('item');
             listItem.innerHTML = `
-                <span>${itemName} (R$ ${itemValue.toFixed(2)} x ${itemQuantity})</span>
+                <span>${itemName} : R$ ${itemValue.toFixed(2)} x ${itemQuantity}</span>
                 <span>R$ ${itemTotal.toFixed(2)}</span>
                 <button onclick="removeItem(this, ${itemTotal.toFixed(2)})">Remover</button>
             `;
