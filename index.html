@@ -26,6 +26,7 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             overflow: hidden;
             padding: 20px;
+            text-align: center;
         }
 
         h1 {
@@ -88,6 +89,26 @@
             color: #5e60ce;
         }
 
+        .initial-value {
+            margin-bottom: 15px;
+        }
+
+        .initial-value input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .export-button {
+            margin-top: 15px;
+            background: #4CAF50;
+        }
+
+        .export-button:hover {
+            background: #45a049;
+        }
+
         @media (max-width: 400px) {
             .container {
                 padding: 15px;
@@ -104,8 +125,17 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container" id="initialScreen">
         <h1>Lista de Compras</h1>
+        <p>Criado por Jonathan Felix</p>
+        <button onclick="startApp()">Iniciar</button>
+    </div>
+
+    <div class="container" id="mainScreen" style="display: none;">
+        <h1>Lista de Compras</h1>
+        <div class="initial-value">
+            <input type="number" id="initialValue" placeholder="Valor Inicial" min="0" step="0.01">
+        </div>
         <form class="item-form" id="itemForm">
             <input type="text" id="itemName" placeholder="Item" required>
             <input type="number" id="itemValue" placeholder="Preço" min="0" step="0.01" required>
@@ -114,14 +144,26 @@
         </form>
         <ul class="item-list" id="itemList"></ul>
         <div class="total" id="totalDisplay">Total: R$ 0.00</div>
+        <div class="total" id="remainingDisplay">Restante: R$ 0.00</div>
+        <button class="export-button" onclick="exportToPDF()">Exportar para PDF</button>
     </div>
 
     <script>
+        const initialScreen = document.getElementById('initialScreen');
+        const mainScreen = document.getElementById('mainScreen');
         const itemForm = document.getElementById('itemForm');
         const itemList = document.getElementById('itemList');
         const totalDisplay = document.getElementById('totalDisplay');
+        const remainingDisplay = document.getElementById('remainingDisplay');
+        const initialValueInput = document.getElementById('initialValue');
 
         let total = 0;
+        let initialValue = 0;
+
+        function startApp() {
+            initialScreen.style.display = 'none';
+            mainScreen.style.display = 'block';
+        }
 
         itemForm.addEventListener('submit', (event) => {
             event.preventDefault();
@@ -142,16 +184,46 @@
             `;
 
             itemList.appendChild(listItem);
-            totalDisplay.textContent = `Total: R$ ${total.toFixed(2)}`;
-
+            updateTotals();
             itemForm.reset();
         });
 
         function removeItem(button, itemTotal) {
             button.parentElement.remove();
             total -= itemTotal;
-            totalDisplay.textContent = `Total: R$ ${total.toFixed(2)}`;
+            updateTotals();
         }
+
+        function updateTotals() {
+            totalDisplay.textContent = `Total: R$ ${total.toFixed(2)}`;
+            initialValue = parseFloat(initialValueInput.value) || 0;
+            const remaining = initialValue - total;
+            remainingDisplay.textContent = `Restante: R$ ${remaining.toFixed(2)}`;
+        }
+
+        initialValueInput.addEventListener('input', updateTotals);
+
+        function exportToPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.text("Lista de Compras", 10, 10);
+        doc.text("Criado por Jonathan Felix", 10, 20);
+
+        let y = 30;
+        itemList.querySelectorAll('.item').forEach(item => {
+            const textLines = doc.splitTextToSize(item.textContent, 180); // Evita que textos longos sejam cortados
+            doc.text(textLines, 10, y);
+            y += (textLines.length * 7); // Ajusta a posição para a próxima linha
+        });
+
+        doc.text(totalDisplay.textContent, 10, y);
+        doc.text(remainingDisplay.textContent, 10, y + 10);
+
+        doc.save("lista_de_compras.pdf");
+}
+
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
 </html>
