@@ -164,6 +164,14 @@
     </div>
 
     <script>
+
+        // Impede que o usuário acidentamente regarregue a página e perca a lista
+        // Em fase de testes, avaliando um alert.
+        window.addEventListener('beforeunload', function (e) {
+            e.preventDefault();
+            e.returnValue = 'Tem certeza que deseja recarregar a página? Dados não salvos podem ser perdidos.';
+        });
+        
         const initialScreen = document.getElementById('initialScreen');
         const mainScreen = document.getElementById('mainScreen');
         const itemForm = document.getElementById('itemForm');
