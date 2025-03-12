@@ -1,1 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Compras</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background: #f9f9f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
 
+        .container {
+            width: 100%;
+            max-width: 400px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            text-align: center;
+            color: #5e60ce;
+        }
+
+        .item-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        input[type="number"] {
+            max-width: 100px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background: #5e60ce;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #4c55b7;
+        }
+
+        .item-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eaeaea;
+            word-wrap: break-word;
+        }
+
+        .total {
+            text-align: right;
+            margin-top: 15px;
+            font-size: 1.2rem;
+            color: #5e60ce;
+        }
+
+        .initial-value {
+            margin-bottom: 15px;
+        }
+
+        .initial-value input {
+            width: 100%; /* Agora ocupa todo o espaço disponível */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            text-align: center; /* Centraliza o texto dentro do campo */
+        }
+
+        .export-button {
+            margin-top: 15px;
+            background: #4c55b7; /*#4c55b7 roxo*/
+        }
+
+        .export-button:hover {
+            background: #31c15c;
+        }
+
+        @media (max-width: 400px) {
+            .container {
+                padding: 15px;
+            }
+
+            .item-form {
+                flex-direction: column;
+            }
+
+            input[type="number"] {
+                max-width: 100%;
+            }
+        }
+
+        /* Novas regras CSS para o campo "Limite" */
+        .initial-value {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .initial-value input {
+            flex: 1;
+            max-width: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="initialScreen">
+        <h1>Lista de Compras</h1>
+        <p>Criado por Jonathan Felix</p>
+        <button onclick="startApp()">Iniciar</button>
+    </div>
+
+    <div class="container" id="mainScreen" style="display: none;">
+        <h1>Lista de Compras</h1>
+        <div class="initial-value">
+            <input type="number" id="initialValue" placeholder="Limite" min="0" step="0.01">
+        </div>
+        <form class="item-form" id="itemForm">
+            <input type="text" id="itemName" placeholder="Item" required>
+            <input type="number" id="itemValue" placeholder="Preço" min="0" step="0.01" required>
+            <input type="number" id="itemQuantity" placeholder="Qtd." min="1" required>
+            <button type="submit">Adicionar</button>
+        </form>
+        <ul class="item-list" id="itemList"></ul>
+        <div class="total" id="totalDisplay">Total: R$ 0.00</div>
+        <div class="total" id="remainingDisplay">Resta: R$ 0.00</div>
+        <button class="export-button" onclick="exportToPDF()">Exportar para PDF</button> </br></br>
+        <p>Para não perder a lista</p>
+        <p>Não atualize a página</p>
+    </div>
+
+    <script>
+        
+        const initialScreen = document.getElementById('initialScreen');
+        const mainScreen = document.getElementById('mainScreen');
+        const itemForm = document.getElementById('itemForm');
+        const itemList = document.getElementById('itemList');
+        const totalDisplay = document.getElementById('totalDisplay');
+        const remainingDisplay = document.getElementById('remainingDisplay');
+        const initialValueInput = document.getElementById('initialValue');
+
+        let total = 0;
+        let initialValue = 0;
+
+        function startApp() {
+            initialScreen.style.display = 'none';
+            mainScreen.style.display = 'block';
+        }
+
+        itemForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const itemName = document.getElementById('itemName').value;
+            const itemValue = parseFloat(document.getElementById('itemValue').value);
+            const itemQuantity = parseInt(document.getElementById('itemQuantity').value);
+
+            const itemTotal = itemValue * itemQuantity;
+            total += itemTotal;
+
+            const listItem = document.createElement('li');
+            listItem.classList.add('item');
+            listItem.innerHTML = `
+                <span>${itemName} : R$ ${itemValue.toFixed(2)} x ${itemQuantity}</span>
+                <span>R$ ${itemTotal.toFixed(2)}</span>
+                <button onclick="removeItem(this, ${itemTotal.toFixed(2)})">Remover</button>
+            `;
+
+            itemList.appendChild(listItem);
+            updateTotals();
+            itemForm.reset();
+        });
+
+        function removeItem(button, itemTotal) {
+            button.parentElement.remove();
+            total -= itemTotal;
+            updateTotals();
+        }
+
+        function updateTotals() {
+            totalDisplay.textContent = `Total: R$ ${total.toFixed(2)}`;
+            initialValue = parseFloat(initialValueInput.value) || 0;
+            const remaining = initialValue - total;
+            remainingDisplay.textContent = `Restante: R$ ${remaining.toFixed(2)}`;
+        }
+
+        initialValueInput.addEventListener('input', updateTotals);
+
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.text("Lista de Compras", 10, 10);
+            doc.text("Criado por Jonathan Felix", 10, 20);
+
+            let y = 30;
+            itemList.querySelectorAll('.item').forEach(item => {
+                const textLines = doc.splitTextToSize(item.textContent, 180); // Evita que textos longos sejam cortados
+                doc.text(textLines, 10, y);
+                y += (textLines.length * 7); // Ajusta a posição para a próxima linha
+            });
+
+            doc.text(totalDisplay.textContent, 10, y);
+            doc.text(remainingDisplay.textContent, 10, y + 10);
+
+            doc.save("lista_de_compras.pdf");
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</body>
+</html>
