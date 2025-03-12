@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -55,16 +55,28 @@
 
         button {
             padding: 10px 15px;
-            background: #5e60ce;
-            color: #fff;
+            color: #ffffff;
+            background: #4c55b7;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             transition: background 0.3s;
         }
 
-        button:hover {
-            background: #4c55b7;
+        .add-button {
+            background: #31c15c; /* Verde */
+        }
+
+        .add-button:hover {
+            background: #28a745; /* Verde mais escuro */
+        }
+
+        .remove-button {
+            background: #dc3545; /* Vermelho */
+        }
+
+        .remove-button:hover {
+            background: #c82333; /* Vermelho mais escuro */
         }
 
         .item-list {
@@ -101,13 +113,46 @@
             text-align: center; /* Centraliza o texto dentro do campo */
         }
 
-        .export-button {
-            margin-top: 15px;
-            background: #4c55b7; /*#4c55b7 roxo*/
+        .summary {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            color: #5e60ce;
         }
 
-        .export-button:hover {
-            background: #31c15c;
+        .floating-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background: #5e60ce;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background 0.3s;
+        }
+
+        .floating-button:hover {
+            background: #4c55b7;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .notification.show {
+            opacity: 1;
         }
 
         @media (max-width: 400px) {
@@ -124,7 +169,6 @@
             }
         }
 
-        /* Novas regras CSS para o campo "Limite" */
         .initial-value {
             display: flex;
             justify-content: space-between;
@@ -146,6 +190,10 @@
 
     <div class="container" id="mainScreen" style="display: none;">
         <h1>Lista de Compras</h1>
+        <div class="summary" id="summaryDisplay">
+            <div>Total: R$ 0.00</div>
+            <div>Restante: R$ 0.00</div>
+        </div>
         <div class="initial-value">
             <input type="number" id="initialValue" placeholder="Limite" min="0" step="0.01">
         </div>
@@ -153,25 +201,31 @@
             <input type="text" id="itemName" placeholder="Item" required>
             <input type="number" id="itemValue" placeholder="Preço" min="0" step="0.01" required>
             <input type="number" id="itemQuantity" placeholder="Qtd." min="1" required>
-            <button type="submit">Adicionar</button>
+            <button type="submit" class="add-button">Adicionar</button>
         </form>
         <ul class="item-list" id="itemList"></ul>
         <div class="total" id="totalDisplay">Total: R$ 0.00</div>
         <div class="total" id="remainingDisplay">Resta: R$ 0.00</div>
-        <button class="export-button" onclick="exportToPDF()">Exportar para PDF</button> </br></br>
+        <!--<button class="export-button" onclick="exportToPDF()">Exportar para PDF</button> </br></br>-->
         <p>Para não perder a lista</p>
         <p>Não atualize a página</p>
     </div>
 
+    <button class="floating-button" onclick="scrollToTop()">↑</button>
+
+    <!-- Notificação -->
+    <div class="notification" id="notification"></div>
+
     <script>
-        
         const initialScreen = document.getElementById('initialScreen');
         const mainScreen = document.getElementById('mainScreen');
         const itemForm = document.getElementById('itemForm');
         const itemList = document.getElementById('itemList');
         const totalDisplay = document.getElementById('totalDisplay');
         const remainingDisplay = document.getElementById('remainingDisplay');
+        const summaryDisplay = document.getElementById('summaryDisplay');
         const initialValueInput = document.getElementById('initialValue');
+        const notification = document.getElementById('notification');
 
         let total = 0;
         let initialValue = 0;
@@ -179,6 +233,15 @@
         function startApp() {
             initialScreen.style.display = 'none';
             mainScreen.style.display = 'block';
+        }
+
+        // Função para exibir notificação
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000); // A notificação desaparece após 3 segundos
         }
 
         itemForm.addEventListener('submit', (event) => {
@@ -196,18 +259,20 @@
             listItem.innerHTML = `
                 <span>${itemName} : R$ ${itemValue.toFixed(2)} x ${itemQuantity}</span>
                 <span>R$ ${itemTotal.toFixed(2)}</span>
-                <button onclick="removeItem(this, ${itemTotal.toFixed(2)})">Remover</button>
+                <button class="remove-button" onclick="removeItem(this, ${itemTotal.toFixed(2)})">Remover</button>
             `;
 
             itemList.appendChild(listItem);
             updateTotals();
             itemForm.reset();
+            showNotification("Item adicionado com sucesso!"); // Notificação de item adicionado
         });
 
         function removeItem(button, itemTotal) {
             button.parentElement.remove();
             total -= itemTotal;
             updateTotals();
+            showNotification("Item removido com sucesso!"); // Notificação de item removido
         }
 
         function updateTotals() {
@@ -215,9 +280,17 @@
             initialValue = parseFloat(initialValueInput.value) || 0;
             const remaining = initialValue - total;
             remainingDisplay.textContent = `Restante: R$ ${remaining.toFixed(2)}`;
+            summaryDisplay.innerHTML = `
+                <div>Total: R$ ${total.toFixed(2)}</div>
+                <div>Restante: R$ ${remaining.toFixed(2)}</div>
+            `;
         }
 
         initialValueInput.addEventListener('input', updateTotals);
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
         function exportToPDF() {
             const { jsPDF } = window.jspdf;
